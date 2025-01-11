@@ -108,6 +108,8 @@ If there are some changes, new revision will be auto-generated and applied.
 
 ## Keycloak
 
+**NOTE:** Keycloak is not used yet anywhere in the code. so you do not need to enable it. 
+I plan to implement it as an IAM solution refactoring current code.
 
 Keycloak resources are set to CPU: 512m and memory:512M, as these are minimum settings that worked with local k8s deployment.
 
