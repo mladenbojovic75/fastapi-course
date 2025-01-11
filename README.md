@@ -29,7 +29,7 @@ docker build  -t fastapi-course:alpine .
 
 Local OS: Ubuntu 22.04 
 
-Rancher Desktop: 1.17.0 running Docker and Kubernetes 1.31
+Rancher Desktop: 1.17.0 running Docker 27.4.1 and Kubernetes 1.31
 
 Helm : v3.16.4
 
