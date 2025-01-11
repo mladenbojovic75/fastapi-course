@@ -20,6 +20,19 @@ As image has Alembic installed and all required PostgreSQL libraries, it is also
 
 Also, there was some minor code refactoring in order for it to work with Alpine image, Python 3.12. and updated libraries.
 
+Image referenced in helm charts `fastapi-course:alpine` was built localy with:
+```
+docker build  -t fastapi-course:alpine .
+```
+
+# Requirements:
+
+Local OS: Ubuntu 22.04 
+
+Rancher Desktop: 1.17.0 running Docker and Kubernetes 1.31
+
+Helm : v3.16.4
+
 # Helm chart
 
 ## Local directories
