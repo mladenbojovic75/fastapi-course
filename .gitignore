@@ -5,3 +5,4 @@ app-old/
 alembic
 alembic.*
 migrations-test/
+*.tgz
