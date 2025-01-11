@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: migrations-script
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+data: 
+  migrations.sh: |- 
+{{ .Files.Get "files/migrations.sh" | toString | indent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: env.py
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+data: 
+  env.py: |- 
+{{ .Files.Get "files/env.py" | toString | indent 4 }}

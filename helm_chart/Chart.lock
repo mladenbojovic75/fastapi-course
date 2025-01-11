@@ -1,0 +1,18 @@
+dependencies:
+- name: nginx
+  repository: ""
+  version: 0.1.0
+- name: fastapi
+  repository: ""
+  version: 0.1.0
+- name: pgadmin
+  repository: ""
+  version: 0.1.0
+- name: postgres
+  repository: ""
+  version: 0.1.0
+- name: keycloak
+  repository: https://charts.bitnami.com/bitnami
+  version: 24.4.0
+digest: sha256:242c5afeffd83798e62371c2803c4ce41786ce2a179bb548b85abbe5b00425fb
+generated: "2025-01-11T08:31:13.685650961+01:00"

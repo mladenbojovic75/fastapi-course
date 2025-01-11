@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.persistentVolume.name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    type: {{ .Values.persistentVolume.labels.type }}
+spec:
+  storageClassName: {{ .Values.persistentVolume.storageClassName }}
+  capacity:
+    storage: {{ .Values.persistentVolume.capacity.storage }}
+  accessModes:
+     {{- toYaml .Values.persistentVolume.accessModes | nindent 4 }}
+  hostPath:
+    path: {{ .Values.persistentVolume.hostPath.basePath}}

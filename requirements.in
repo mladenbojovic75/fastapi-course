@@ -27,6 +27,7 @@ pyasn1
 pycparser
 pydantic
 pydantic_core
+pydantic_settings
 pyproject_hooks
 python-dotenv
 python-jose

@@ -1,0 +1,304 @@
+nginx:
+  enabled: true
+  fullnameOverride: nginx
+  config: |
+    upstream fastapi_server {
+        server fastapi:8080;
+    }
+    server {
+      listen 80 ;
+      listen [::]:80 ;
+      
+      #server_name _; # 
+      server_name nginx.localhost.com;
+
+
+      location /fastapi {
+        rewrite ^/fastapi/(.*)/?$ /$1 break;
+        proxy_pass http://fastapi_server;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host $host;
+        proxy_set_header X-NginX-Proxy true;
+      
+        # for WebSockets
+        # proxy_set_header Upgrade $http_upgrade;
+        # proxy_set_header Connection 'upgrade';
+      }
+    }
+  volumes:
+    - name: nginx-conf
+      configMap:
+        name: nginx-conf
+  volumeMounts:
+    - name: nginx-conf
+      mountPath: /etc/nginx/conf.d/server.conf
+      subPath: server.conf
+  ingress:
+     enabled: true
+     annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: web
+     hosts:
+      - host: nginx.localhost.com
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx
+                port:
+                  name: http
+
+fastapi:
+  enabled: true
+  fullnameOverride: fastapi
+  image:
+    repository: fastapi-course
+    tag: alpine
+    pullPolicy: IfNotPresent
+  env:
+    - name: DATABASE_HOSTNAME
+      value: postgres
+    - name: DATABASE_PORT
+      value: 5432
+    - name: DATABASE_USERNAME
+      value: postgres
+    - name: DATABASE_PASSWORD
+      value: Postgres123
+    - name: DATABASE_NAME
+      value: fastapi
+    - name: PORT
+      value: 8080
+    - name: SECRET_KEY
+      value: 9aec00abd622cac879f538871fa0d731000ca1c30e7b7a47508ca808c91585ba
+    - name: ALGORITHM
+      value: HS256
+    - name: ACCESS_TOKEN_EXPIRE_MINUTES
+      value: 60
+    - name: ROOT_PATH
+      value: "/fastapi"
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+  # livenessProbe:
+  #   httpGet:
+  #     path: /
+  #     port: 8080
+  # readinessProbe:
+  #   httpGet:
+  #     path: /
+  #     port: 8080
+  persistentVolume:
+    name: migrations-pv-volume
+    labels:
+      type: local
+    storageClassName: manual
+    capacity:
+      storage: 50Mi
+    accessModes:
+      - ReadWriteOnce
+    hostPath:
+      basePath: /home/mladen/rancher-desktop/migrations
+  persistentVolumeClaim:
+    name: migrations-pv-claim
+    storageClassName: manual
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 50Mi
+  migrations:
+    enabled: true
+    spec:
+      completions: 1
+      completionMode: Indexed 
+      backoffLimitPerIndex: 1  
+      maxFailedIndexes: 1      
+      ttlSecondsAfterFinished: 90
+    securityContext:
+      runAsUser: 0
+      runAsGroup: 0
+      fsGroup: 0
+      fsGroupChangePolicy: Always
+    volumes:
+         - name: migrations-pv-storage
+           persistentVolumeClaim:
+             claimName: migrations-pv-claim
+         - name: migrations-script
+           configMap:
+             name: migrations-script
+         - name: env-py
+           configMap:
+             name: env.py
+    volumeMounts:
+      - mountPath: /home/fastapi/migrations
+        name: migrations-pv-storage
+        readOnly: false
+      - mountPath: /home/fastapi/migrations.sh
+        name: migrations-script
+        subPath: migrations.sh
+      - mountPath: /home/fastapi/env.py
+        name: env-py
+        subPath: env.py
+    command: 
+      - /bin/sh
+    args:
+      - migrations.sh
+postgres:
+  fullnameOverride: postgres
+  enabled: true
+  image:
+    repository: postgres
+    tag: 17
+    pullPolicy: IfNotPresent
+  service:
+    port: 5432
+  podSecurityContext:
+     runAsUser: 1000
+     runAsGroup: 1000
+  resources:
+    limits:
+      cpu: 512m
+      memory: 512Mi
+    requests:
+      cpu: 512m
+      memory: 128Mi
+  env:
+    - name: POSTGRES_PASSWORD
+      value: Postgres123
+    - name: PGDATA  
+      value: /var/lib/postgresql/data/pgdata
+  persistentVolume:
+    name: postgres-pv-volume
+    labels:
+      type: local
+    storageClassName: manual
+    capacity:
+      storage: 50Mi
+    accessModes:
+      - ReadWriteOnce
+    hostPath:
+      basePath: "/home/mladen/rancher-desktop/pgsql"
+  persistentVolumeClaim:
+    name: postgres-pv-claim
+    storageClassName: manual
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 50Mi
+  volumes:
+       - name: postgres-pv-storage
+         persistentVolumeClaim:
+           claimName: postgres-pv-claim
+  volumeMounts:
+    - mountPath: /var/lib/postgresql/data
+      name: postgres-pv-storage
+      readOnly: false
+pgadmin:
+  fullnameOverride: pgadmin
+  enabled: true
+  image:
+    repository: dpage/pgadmin4
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    port: 8080
+  podSecurityContext:
+     runAsUser: 0
+     runAsGroup: 0
+  resources:
+    limits:
+      cpu: 512m
+      memory: 256Mi
+    requests:
+      cpu: 512m
+      memory: 128Mi
+  env:
+    - name: PGADMIN_DEFAULT_PASSWORD
+      value: Postgres123
+    - name: PGADMIN_DEFAULT_EMAIL  
+      value: brokenmojo@gmail.com
+    - name: PGADMIN_LISTEN_PORT
+      value: 8080 
+  persistentVolume:
+    name: pgadmin-pv-volume
+    labels:
+      type: local
+    storageClassName: manual
+    capacity:
+      storage: 50Mi
+    accessModes:
+      - ReadWriteOnce
+    hostPath:
+      basePath: "/home/mladen/rancher-desktop/pgadmin"
+  persistentVolumeClaim:
+    name: pgadmin-pv-claim
+    storageClassName: manual
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 50Mi
+  volumes:
+       - name: pgadmin-config
+         configMap:
+            name: pgadmin-config
+       - name: pgadmin-data
+         persistentVolumeClaim:
+            claimName: pgadmin-pv-claim
+  volumeMounts:
+    - name: pgadmin-config
+      mountPath: /pgadmin4/servers.json
+      subPath: servers.json
+      readOnly: true
+    - name: pgadmin-data
+      mountPath: /var/lib/pgadmin
+  ingress:
+     enabled: true
+     annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: web
+     hosts:
+      - host: pgadmin.localhost.com
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: pgadmin
+                port:
+                  name: pgadmin
+keycloak:
+  enabled: true
+  fullnameOverride: keycloak
+  resources:
+    limits:
+      cpu: 512m
+      memory: 512Mi
+    requests:
+      cpu: 512m
+      memory: 256Mi
+  postgresql:
+    enabled: false
+  externalDatabase:
+    host: postgres
+    user: postgres
+    password: Postgres123
+    database: keycloak
+    port: 5432
+  auth:
+    adminUser: admin
+    adminPassword: Keycloak123
+  replicaCount: 1
+  containerPorts:
+    http: 8080
+  global:
+    security:
+      allowInsecureImages: true
+  ingress:
+    enabled: true
+    hostname: keycloak.localhost.com
+    annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: web

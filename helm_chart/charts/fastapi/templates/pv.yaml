@@ -1,0 +1,22 @@
+{{- if not (lookup "v1" "PersistentVolume" $.Release.Namespace .Values.persistentVolume.name) }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.persistentVolume.name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    type: {{ .Values.persistentVolume.labels.type }}
+  annotations:
+    "helm.sh/hook": pre-install, pre-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": hook-succeeded
+    "helm.sh/resource-policy": keep
+spec:
+  storageClassName: {{ .Values.persistentVolume.storageClassName }}
+  capacity:
+    storage: {{ .Values.persistentVolume.capacity.storage }}
+  accessModes:
+     {{- toYaml .Values.persistentVolume.accessModes | nindent 4 }}
+  hostPath:
+    path: {{ .Values.persistentVolume.hostPath.basePath}}
+  {{- end}}

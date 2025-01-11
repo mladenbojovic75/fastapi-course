@@ -103,17 +103,22 @@ pydantic==2.10.4
     # via
     #   -r requirements.in
     #   fastapi
+    #   pydantic-settings
 pydantic-core==2.27.2
     # via
     #   -r requirements.in
     #   pydantic
+pydantic-settings==2.7.1
+    # via -r requirements.in
 pyproject-hooks==1.2.0
     # via
     #   -r requirements.in
     #   build
     #   pip-tools
 python-dotenv==1.0.1
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   pydantic-settings
 python-jose==3.3.0
     # via -r requirements.in
 python-multipart==0.0.20
