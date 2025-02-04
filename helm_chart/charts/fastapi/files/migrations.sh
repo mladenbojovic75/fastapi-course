@@ -1,4 +1,25 @@
-#!/bin/sh -xe
+#!/bin/sh 
+
+set -xe
+
+
+# Function to check if the database is available
+check_db() {
+    # Replace 'localhost', 'your_db_port', 'your_db_user', 'your_db_password', 'your_db_name' with actual values
+    if nc -z postgres 5432; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Wait for database to be available
+echo "Waiting for database to become available..."
+while ! check_db; do
+    echo "Database is not available yet, retrying in 5 seconds..."
+    sleep 5
+done
+echo "Database is now available."
 
 # Ensure the migrations directory exists
 if [ ! -d "/home/fastapi/migrations" ]; then

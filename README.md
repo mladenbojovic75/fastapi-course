@@ -25,13 +25,23 @@ Image referenced in helm charts `fastapi-course:alpine` was built localy with:
 docker build  -t fastapi-course:alpine .
 ```
 
+# Added features
+
+- Frontend served with Nginx (static HTML, CSS, JS)
+- User managament and OIDC integration using Keycloak realms and "Introspection endpoint" feature
+- Voting/Unvoting User interface and Posts dashboard for all users
+
 # Requirements:
+
+Tested and works on:
 
 Local OS: Ubuntu 22.04 
 
 Rancher Desktop: 1.17.0 running Docker 27.4.1 and Kubernetes 1.31
 
 Helm : v3.16.4
+
+Hardware: any more recent and decent CPU and 16GB of RAM
 
 # Helm chart
 
@@ -50,7 +60,13 @@ pgadmin:
         basePath: "/home/some_user/local_k8s/pgadmin"
 ```
 
-TBD: Make storage part more agnostic (.e.g. cloud friendly)
+In the values file three local directories are listed:
+
+- /home/<username>/rancher-desktop/migrations
+- /home/<username>/rancher-desktop/pgsql
+- /home/<username>/rancher-desktop/pgadmin
+
+For improvement: Make storage part more agnostic (.e.g. cloud friendly)
 
 ### How to use
 
@@ -108,13 +124,26 @@ If there are some changes, new revision will be auto-generated and applied.
 
 ## Keycloak
 
-**NOTE:** Keycloak is not used yet anywhere in the code. so you do not need to enable it. 
-I plan to implement it as an IAM solution refactoring current code.
+Keycloak limits are set to 2 CPU cores and 1G memory, as these are minimum settings that worked with my local k8s deployment (Intel(R) Core(TM) i7-6600U CPU @ 2.60GHz, 16GB RAM).
 
-Keycloak resources are set to CPU: 512m and memory:512M, as these are minimum settings that worked with local k8s deployment.
+Keycloak is installed using external [bitnami helm chart](https://github.com/bitnami/charts/tree/main/bitnami/keycloak)
+Init container was added with values files to create required empty `keycloak` database for it.
 
-Prior to enabling Keycloak in the Helm chart, it is needed to manually create empty 'keycloak' database in PostgreSQL 
-(TBD: maybe automate this?). Simplest way to do it is from PGAdmin web interface.
+
+After Helm install is finished, you should be able to login to master admin console:
+
+http://keycloak.localhost.com
+
+with user: admin and password: Keycloak123
+
+After that, you can create new realm or import the one provided for testing .
+
+Directory `/keycloak_backup` contains example realm export `fastapi.json` for realm configuration with precreated two users (user1, user2 with the same password `test123`)
+and configured `client` with required URLs and `client secret` referenced in `values-rancher-desktop.yaml`.
+
+If you are creating realm from scratch, client secret needs to be updated in value file.
+
+*NOTE* For making user sessions secure, application uses [Keycloak Introspection Endpoint](https://www.keycloak.org/securing-apps/oidc-layers) which retrievs active state of the token in realm time.
 
 ## Ingress
 
@@ -140,5 +169,20 @@ Local ingress on Rancher Desktop is configured using annotation:
 If you don't want to use ingress, simply set `enabled: false`
 
 
+### Using Voting App
+
+If Helm chart installation is sucessfull and keycloak realm `fastapi` is imported,
+you should be able to login to :
+
+http://nginx.localhost.com 
+
+with users created in Keycloak.
+
+#### App menu
+
+ - User info - reads user information from Keycloak realm
+ - User posts - create or delete user posts
+ - Voting Dashboard - vote or unvote posts
+ - Dashboard - all users posts sorted by number of votes
 
 

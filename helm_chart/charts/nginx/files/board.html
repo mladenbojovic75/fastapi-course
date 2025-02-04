@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Posts Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Posts Dashboard</h1>
+        <table id="postsTable">
+            <thead>
+                <tr>
+                    <th>Post ID</th>
+                    <th>Title</th>
+                    <th>Content</th>
+                    <th>Votes</th>
+                </tr>
+            </thead>
+            <tbody id="postsTbody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        async function fetchDashboard() {
+            const response = await fetch('/dashboard');
+            if (response.ok) {
+                const users = await response.json();
+                // Flatten the posts from all users into one array and sort by votes
+                let allPosts = [];
+                users.forEach(user => {
+                    allPosts = allPosts.concat(user.posts);
+                });
+                
+                // Sort posts by votes in descending order
+                allPosts.sort((a, b) => b.votes - a.votes);
+                
+                let postsHTML = '';
+                allPosts.forEach(post => {
+                    postsHTML += `<tr>
+                        <td>${post.id}</td>
+                        <td>${post.title}</td>
+                        <td>${post.content}</td>
+                        <td>${post.votes}</td>
+                    </tr>`;
+                });
+                document.getElementById('postsTbody').innerHTML = postsHTML;
+            } else {
+                alert('Failed to fetch dashboard data');
+            }
+        }
+
+        // Fetch dashboard data when the page loads
+        window.onload = fetchDashboard;
+    </script>
+</body>
+</html>

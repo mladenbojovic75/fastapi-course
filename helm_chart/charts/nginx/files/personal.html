@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logged In</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #3498db;
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+            border-radius: 8px;
+        }
+        .json-viewer {
+            font-family: 'Consolas', 'Courier New', monospace;
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .json-viewer .key {
+            color: #905;
+        }
+        .json-viewer .string {
+            color: #07a;
+        }
+        .json-viewer .number {
+            color: #164;
+        }
+        .json-viewer .boolean {
+            color: #00f;
+        }
+        .json-viewer .null {
+            color: #000;
+        }
+        .json-viewer .array {
+            padding-left: 20px;
+        }
+        .json-viewer .object {
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Your personal data</h1>
+        <p>User parameters are managed by Keycloak.</p>
+        <div id="protected-content"></div>
+    </div>
+
+    <script>
+        async function fetchProtectedContent() {
+            try {
+                const response = await fetch('/protected');
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('protected-content').innerHTML = jsonViewer(data);
+                } else {
+                    document.getElementById('protected-content').textContent = 'Failed to fetch protected content.';
+                }
+            } catch (error) {
+                console.error('Error fetching protected content:', error);
+                document.getElementById('protected-content').textContent = 'An error occurred while fetching protected content.';
+            }
+        }
+
+        function jsonViewer(jsonData) {
+            // Simple JSON viewer function
+            function formatJson(obj, indent = 0) {
+                let result = '';
+                for (let key in obj) {
+                    if (obj.hasOwnProperty(key)) {
+                        result += `${'  '.repeat(indent)}<span class="key">"${key}"</span>: `;
+                        if (typeof obj[key] === 'object' && obj[key] !== null) {
+                            if (Array.isArray(obj[key])) {
+                                result += '<span class="array">[<br/>' + formatJson(obj[key], indent + 1) + `${'  '.repeat(indent)}]</span>`;
+                            } else {
+                                result += '<span class="object">{<br/>' + formatJson(obj[key], indent + 1) + `${'  '.repeat(indent)}}</span>`;
+                            }
+                        } else {
+                            let valueType = typeof obj[key];
+                            result += `<span class="${valueType}">`;
+                            if (valueType === 'string') {
+                                result += `"${obj[key]}"`;
+                            } else {
+                                result += obj[key];
+                            }
+                            result += `</span>`;
+                        }
+                        result += ',<br/>';
+                    }
+                }
+                // Remove the last comma and newline if present
+                return result ? result.slice(0, -5) + '<br/>' : '';
+            }
+
+            let formattedJson = formatJson(jsonData);
+            return `<div class="json-viewer">${formattedJson}</div>`;
+        }
+
+        // Fetch the protected content when the page loads
+        fetchProtectedContent();
+    </script>
+</body>
+</html>

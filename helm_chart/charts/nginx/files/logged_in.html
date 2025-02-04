@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logged In</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #3498db;
+            color: white;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+        }
+        .container {
+            display: flex;
+            width: 100%;
+        }
+        .menu {
+            background-color: #2980b9;
+            width: 250px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .menu button {
+            background-color: #3498db;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+            font-size: 16px;
+            margin: 10px 0;
+            cursor: pointer;
+            border-radius: 5px;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+        .menu button:hover {
+            background-color: #2471A3;
+        }
+        .content-area {
+            flex: 1;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+            overflow-y: auto;
+        }
+        .content-area iframe {
+            width: 100%;
+            height: calc(100vh - 120px); /* Adjust height to fit content */
+            border: none;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .content-area p {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="menu">
+            <button onclick="loadContent('user-info')">User Info</button>
+            <button onclick="loadContent('user-posts')">User Posts</button>
+            <button onclick="loadContent('voting-dashboard')">Voting Dashboard</button>
+            <button onclick="loadContent('dashboard')">Dashboard</button>
+            <a href="/logout"><button>Logout</button></a>
+        </nav>
+        <div class="content-area" id="content">
+            <h1>Voting App</h1>
+            <iframe id="dynamic-content" src="/personal.html"></iframe>
+        </div>
+    </div>
+
+    <script>
+        function loadContent(contentType) {
+            const iframe = document.getElementById('dynamic-content');
+            switch(contentType) {
+                case 'user-info':
+                    iframe.src = '/personal.html';
+                    break;
+                case 'user-posts':
+                    iframe.src = '/post.html';
+                    break;
+                case 'voting-dashboard':
+                    iframe.src = '/voting.html';
+                    break;
+                    case 'dashboard':
+                    iframe.src = '/board.html';
+                    break;
+                default:
+                    iframe.src = '/personal.html';
+            }
+        }
+    </script>
+</body>
+</html>

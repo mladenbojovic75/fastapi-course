@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal, Optional, List
 
 
 class PostBase(BaseModel):
@@ -15,19 +15,21 @@ class PostCreate(PostBase):
 
 class UserCreate(BaseModel):
     email: EmailStr
-    password: str
+    username: str
 
 class UserOut(BaseModel):
     id: int
     email: EmailStr
-    created_at: datetime
+    username: str
     class Config:
         #orm_mode = True
         from_attributes = True
 
 class UserLogin(BaseModel):
     email: EmailStr
-    password: str
+    username: str
+
+
 
 class Post(PostBase):
     id: int
@@ -37,6 +39,7 @@ class Post(PostBase):
     class Config:
         #orm_mode = True
         from_attributes = True
+        response_model: None
 
 class PostOut(BaseModel):
     Post: Post
@@ -53,3 +56,13 @@ class TokenData(BaseModel):
 class Vote(BaseModel):
     post_id: int
     dir: Literal[0,1]
+
+class PostWithVotes(Post):
+    votes: int
+    
+class UserWithPosts(UserOut):
+    posts: List[PostWithVotes]
+
+#This line is necessary for the forward reference in UserOut
+# UserOut.update_forward_refs()
+UserOut.model_rebuild()

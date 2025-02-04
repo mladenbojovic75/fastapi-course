@@ -60,3 +60,8 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+
+{{- define "nginxConfig" -}}
+{{- .Files.Get "files/default.conf" | nindent 2 -}}
+{{- end -}}

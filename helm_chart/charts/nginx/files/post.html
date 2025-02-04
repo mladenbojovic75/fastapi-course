@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Posts Management</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #3498db;
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+            border-radius: 8px;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        input, textarea, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        button {
+            background-color: #2980b9;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2471A3;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #2980b9;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #e6e6e6;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .button-container button {
+            margin: 0 5px;
+        }
+        #postsTbody input[type="checkbox"] {
+            margin: 0;
+            vertical-align: middle;
+        }
+        a {
+            text-decoration: none;
+        }
+       
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Manage Posts</h1>
+        
+        <h2>Add New Post</h2>
+        <input type="text" id="title" placeholder="Title" required>
+        <textarea id="content" placeholder="Content" required></textarea>
+        <button id="addPostBtn">Add Post</button>
+
+        <h2>User Posts</h2>
+        <div class="button-container">
+            <button id="getAllPostsBtn">Get All User Posts</button>
+            <button id="deleteSelectedPostsBtn">Delete Selected Posts</button>
+        </div>
+
+        <table id="postsTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Content</th>
+                    <th>Published</th>
+                    <th>Created At</th>
+                    <th>Owner ID</th>
+                    <th>Owner Username</th>
+                    <th>Owner Email</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody id="postsTbody"></tbody>
+        </table>
+    </div>
+
+
+    <script>
+        // Your JavaScript code here remains unchanged
+        document.getElementById('addPostBtn').addEventListener('click', async (e) => {
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+            const response = await fetch('/posts/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ title, content })
+            });
+            if (response.ok) {
+                alert('Post added successfully!');
+                document.getElementById('title').value = '';
+                document.getElementById('content').value = '';
+                await fetchPosts();
+            } else {
+                alert('Failed to add post');
+            }
+        });
+
+        async function fetchPosts() {
+            const response = await fetch('/posts/');
+            if (response.ok) {
+                const posts = await response.json();
+                let postsHTML = '';
+                posts.forEach(post => {
+                    postsHTML += `<tr>
+                        <td>${post.Post.id}</td>
+                        <td>${post.Post.title}</td>
+                        <td>${post.Post.content}</td>
+                        <td>${post.Post.published ? 'Yes' : 'No'}</td>
+                        <td>${new Date(post.Post.created_at).toLocaleString()}</td>
+                        <td>${post.Post.owner_id}</td>
+                        <td>${post.Post.owner.username}</td>
+                        <td>${post.Post.owner.email}</td>
+                        <td><input type="checkbox" class="delete-checkbox" data-post-id="${post.Post.id}"></td>
+                    </tr>`;
+                });
+                document.getElementById('postsTbody').innerHTML = postsHTML;
+            } else {
+                alert('Failed to fetch posts');
+            }
+        }
+
+        document.getElementById('getAllPostsBtn').addEventListener('click', fetchPosts);
+
+        document.getElementById('deleteSelectedPostsBtn').addEventListener('click', async () => {
+            const checkboxes = document.querySelectorAll('.delete-checkbox:checked');
+            const postsToDelete = Array.from(checkboxes).map(cb => cb.getAttribute('data-post-id'));
+
+            for (const postId of postsToDelete) {
+                const response = await fetch(`/posts/${postId}`, {
+                    method: 'DELETE'
+                });
+                if (!response.ok) {
+                    alert(`Failed to delete post with ID: ${postId}`);
+                }
+            }
+            await fetchPosts(); // Refresh the table after deletions
+        });
+
+        // Initial fetch of posts when the page loads
+        fetchPosts();
+    </script>
+</body>
+</html>

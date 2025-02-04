@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #ddd;
+        }
+        .user-posts {
+            padding: 0; /* Remove padding to fit details element better */
+        }
+        .user-posts details {
+            margin-bottom: 10px;
+        }
+        .user-posts summary {
+            cursor: pointer;
+            outline: none;
+            padding: 8px;
+            background-color: #333;
+            color: white;
+            font-weight: bold;
+        }
+        .user-posts table {
+            width: 100%;
+            margin-top: 10px;
+        }
+        .user-posts th, .user-posts td {
+            padding: 8px;
+        }
+        .user-posts th {
+            background-color: #666;
+            color: white;
+        }
+        .vote-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        .vote-buttons button {
+            padding: 5px 10px;
+            cursor: pointer;
+            background-color: #f0f0f0;
+            border: none;
+            border-radius: 4px;
+        }
+        .vote-buttons button:hover {
+            background-color: #e0e0e0;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 300px;
+            border-radius: 5px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .modal-content button {
+            margin-top: 10px;
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .modal-content button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Voting Dashboard</h1>
+        <table id="usersTable">
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Posts</th>
+                </tr>
+            </thead>
+            <tbody id="usersTbody"></tbody>
+        </table>
+    </div>
+
+    <!-- Modal for displaying vote feedback -->
+    <div id="voteModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">×</span>
+            <p id="voteModalMessage"></p>
+            <button onclick="closeModal()">OK</button>
+        </div>
+    </div>
+
+    <script>
+        async function fetchDashboard() {
+            const response = await fetch('/dashboard');
+            if (response.ok) {
+                const users = await response.json();
+                let usersHTML = '';
+                users.forEach(user => {
+                    usersHTML += `<tr>
+                        <td>${user.id}</td>
+                        <td>${user.username}</td>
+                        <td>${user.email}</td>
+                        <td class="user-posts">
+                            <details>
+                                <summary>View Posts</summary>
+                                <table>
+                                    <tr><th>Post ID</th><th>Title</th><th>Content</th><th>Votes</th><th>Actions</th></tr>
+                                    ${user.posts.map(post => `<tr data-post-id="${post.id}">
+                                        <td>${post.id}</td>
+                                        <td>${post.title}</td>
+                                        <td>${post.content}</td>
+                                        <td class="vote-count">${post.votes}</td>
+                                        <td>
+                                            <div class="vote-buttons">
+                                                <button class="vote" onclick="vote(${post.id}, 1)">Vote</button>
+                                                <button class="unvote" onclick="vote(${post.id}, 0)">Unvote</button>
+                                            </div>
+                                        </td>
+                                    </tr>`).join('')}
+                                </table>
+                            </details>
+                        </td>
+                    </tr>`;
+                });
+                document.getElementById('usersTbody').innerHTML = usersHTML;
+            } else {
+                alert('Failed to fetch dashboard data');
+            }
+        }
+
+        async function vote(postId, direction) {
+            const voteData = { post_id: postId, dir: direction };
+            try {
+                const response = await fetch('/vote', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(voteData)
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    // Update vote count
+                    const postRow = document.querySelector(`tr[data-post-id="${postId}"]`);
+                    const voteCount = postRow.querySelector('.vote-count');
+                    const newVoteCount = direction === 1 ? parseInt(voteCount.textContent) + 1 : parseInt(voteCount.textContent) - 1;
+                    voteCount.textContent = newVoteCount;
+
+                    // Display modal with message
+                    showModal(result.message);
+                } else {
+                    // Handle errors from server
+                    let message;
+                    if (result.detail && result.detail.includes('already voted')) {
+                        message = 'You have already voted on this post.';
+                    } else if (result.detail && result.detail.includes('does not exist')) {
+                        message = 'You have not voted on this post yet.';
+                    } else {
+                        message = result.detail || 'An error occurred while voting';
+                    }
+                    showModal(message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showModal('An unexpected error occurred. Please try again.');
+            }
+        }
+
+        function showModal(message) {
+            document.getElementById('voteModalMessage').textContent = message;
+            document.getElementById('voteModal').style.display = "block";
+        }
+
+        function closeModal() {
+            document.getElementById('voteModal').style.display = "none";
+        }
+
+        // Close modal if user clicks outside of the modal
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('voteModal')) {
+                closeModal();
+            }
+        }
+
+        // Fetch dashboard data when the page loads
+        window.onload = fetchDashboard;
+    </script>
+</body>
+</html>

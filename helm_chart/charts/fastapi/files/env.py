@@ -94,9 +94,31 @@ def ensure_db_exists():
     finally:
         conn.close()
 
+# Create Keycloak database
+def ensure_db_keycloak_exists():
+    db_url_without_db = config.get_main_option("sqlalchemy.url").rsplit('/', 1)[0]
+    engine = create_engine(db_url_without_db)
+    conn = engine.connect()
+    try:
+        # Check if the database exists
+        exists = conn.scalar(text(f"SELECT 1 FROM pg_database WHERE datname = 'keycloak'"))
+        if not exists:
+            # Close the current connection (which is in a transaction) to create the database
+            conn.close()
+            # Use a new connection explicitly set to not use transactions
+            with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as connection:
+                connection.execute(text(f'CREATE DATABASE "keycloak"'))
+            print(f"Database 'keycloak' created.")
+        else:
+            print(f"Database 'keycloak' already exists.")
+    except Exception as e:
+        print(f"Error checking or creating database: {e}")
+    finally:
+        conn.close()
 
 if context.is_offline_mode():
     run_migrations_offline()
 else:
+    ensure_db_keycloak_exists()
     ensure_db_exists()
     run_migrations_online()
