@@ -106,10 +106,6 @@ Job `fastapi-migrations` should be created and run the job pod that will perform
 
 - check if fastapi database and required tables are created (migrations job should complete without errors)
 
-- endpoints for fastapi applications should be available at: `http://nginx.localhost.com/fastapi`
-
-- you should be able to see Swagger/OpenAPI specification at:  `http://nginx.localhost.com/fastapi/docs`
-
 ## Migrations
 
 Migrations are automated with [migrations.sh](helm_chart/charts/fastapi/files/migrations.sh) script that is using Alembic commands presented in the course.
