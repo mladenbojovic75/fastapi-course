@@ -179,9 +179,7 @@ fastapi:
     capacity:
       storage: 50Mi
     accessModes:
-      - ReadWriteOnceginx.localhost.com/posts/5".
-￼VM261 voting.html:43 ￼
- POST ￼http://nginx.localhost.com//vote/ 409 (Conflict)
+      - ReadWriteOnce
       basePath: /home/mladen/rancher-desktop/migrations
   persistentVolumeClaim:
     name: migrations-pv-claim
